@@ -2,6 +2,10 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "ESP32_inmp441_to_UDP",
+			"path": "../../ESP32-Project-R/ESP32_inmp441_to_UDP"
 		}
 	],
 	"settings": {

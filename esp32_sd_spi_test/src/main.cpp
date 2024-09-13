@@ -21,8 +21,8 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("ok serial!");
-    hspi.begin(14, 26, 13, 15);
-    if (!sd.begin(SdSpiConfig(15, DEDICATED_SPI, 18e6, &hspi)))
+    hspi.begin(14, 18, 15, 13);
+    if (!sd.begin(SdSpiConfig(13, DEDICATED_SPI, 18e6, &hspi)))
     {
         Serial.println("error");
         // return;

@@ -2,10 +2,10 @@
 #include <driver/i2s.h>
 
 #define SAMPLE_BUFFER_SIZE 2048
-#define SAMPLE_RATE 40000
-#define I2S_MIC_SERIAL_CLOCK GPIO_NUM_17
-#define I2S_MIC_LEFT_RIGHT_CLOCK GPIO_NUM_21
-#define I2S_MIC_SERIAL_DATA GPIO_NUM_4
+#define SAMPLE_RATE 10000
+#define I2S_MIC_SERIAL_CLOCK 14
+#define I2S_MIC_LEFT_RIGHT_CLOCK 27
+#define I2S_MIC_SERIAL_DATA 26
 
 i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
@@ -19,17 +19,21 @@ i2s_config_t i2s_config = {
     .dma_buf_len = 64,
     .use_apll = false};
 
+// i2s0 : 32, 33, 25
+// i2s1 : 26, 27, 14
+
 i2s_pin_config_t i2s_mic_pins = {
-    .bck_io_num = I2S_MIC_SERIAL_CLOCK,
-    .ws_io_num = I2S_MIC_LEFT_RIGHT_CLOCK,
+    .bck_io_num = 26,
+    .ws_io_num = 27,
     .data_out_num = I2S_PIN_NO_CHANGE,
-    .data_in_num = I2S_MIC_SERIAL_DATA};
+    .data_in_num = 14};
 
 void setup()
 {
   Serial.begin(115200);
   Serial.println("check!");
-
+  pinMode(2, OUTPUT);
+  
   i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
   i2s_set_pin(I2S_NUM_0, &i2s_mic_pins);
 }
@@ -39,13 +43,15 @@ int32_t raw_samples[SAMPLE_BUFFER_SIZE];
 
 void loop()
 {
+  digitalWrite(2, HIGH);
   size_t bytes_read = 0;
   i2s_read(I2S_NUM_0, raw_samples, sizeof(int32_t) * SAMPLE_BUFFER_SIZE, &bytes_read, portMAX_DELAY);
   int samples_read = bytes_read / sizeof(int32_t);
   for (int i = 0; i < samples_read; i++)
   {
-    Serial.printf("%ld\n", raw_samples[i] >> 8);
+    Serial.printf("%d\n", raw_samples[i] >> 8);
     // Serial.println();
   }
+  digitalWrite(2, LOW);
   // Serial.println(bytes_read);
 }

@@ -62,7 +62,7 @@ void setup()
     {
         Serial.println("error");
     }
-    auto count = file.write("text so long and 中文测试");
+    auto count = file.write("text so long and 中文eeeeee测试");
     file.sync();
     file.close();
     // root.close();

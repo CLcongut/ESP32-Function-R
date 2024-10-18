@@ -174,14 +174,16 @@ void loop(void)
   xout = event.acceleration.x;
   yout = event.acceleration.y;
   zout = event.acceleration.z;
+  Serial.println(xout);
+  Serial.println(sizeof(xout));
 
-  roll = atan(xout / sqrt(pow(xout, 2) + pow(zout, 2))) * 180 / PI;
-  pitch = atan(-1 * xout / sqrt(pow(yout, 2) + pow(zout, 2))) * 180 / PI;
+  // roll = atan(xout / sqrt(pow(xout, 2) + pow(zout, 2))) * 180 / PI;
+  // pitch = atan(-1 * xout / sqrt(pow(yout, 2) + pow(zout, 2))) * 180 / PI;
 
-  rollF = 0.94 * rollF + 0.06 * roll;
-  pitchF = 0.94 * pitchF + 0.06 * pitch;
+  // rollF = 0.94 * rollF + 0.06 * roll;
+  // pitchF = 0.94 * pitchF + 0.06 * pitch;
 
-  Serial.println(rollF);
-  Serial.println(pitchF);
+  // Serial.println(rollF);
+  // Serial.println(pitchF);
   delay(10);
 }

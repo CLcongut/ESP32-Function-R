@@ -1,189 +1,113 @@
-#include <Arduino.h>
+/***************************************************************************
+ * Example sketch for the ADXL345_WE library
+ *
+ * This sketch shows how to get the basic raw and g values
+ *
+ * Further information can be found on:
+ * https://wolles-elektronikkiste.de/adxl345-teil-1 (German)
+ * https://wolles-elektronikkiste.de/en/adxl345-the-universal-accelerometer-part-1
+ *(English)
+ *
+ ***************************************************************************/
+
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_ADXL345_U.h>
+#include <ADXL345_WE.h>
+#define ADXL345_I2CADDR 0x53  // 0x1D if SDO = HIGH
 
-/* Assign a unique ID to this sensor at the same time */
-Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
-float roll, pitch;
-float xout, yout, zout;
-float rollF, pitchF;
+/* There are several ways to create your ADXL345 object:
+ * ADXL345_WE myAcc = ADXL345_WE()                -> uses Wire / I2C Address =
+ * 0x53 ADXL345_WE myAcc = ADXL345_WE(ADXL345_I2CADDR) -> uses Wire /
+ * ADXL345_I2CADDR ADXL345_WE myAcc = ADXL345_WE(&wire2)          -> uses the
+ * TwoWire object wire2 / ADXL345_I2CADDR ADXL345_WE myAcc = ADXL345_WE(&wire2,
+ * ADXL345_I2CADDR) -> all together
+ */
+ADXL345_WE myAcc = ADXL345_WE(0x53);
 
-void displaySensorDetails(void)
-{
-  sensor_t sensor;
-  accel.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print("Sensor:       ");
-  Serial.println(sensor.name);
-  Serial.print("Driver Ver:   ");
-  Serial.println(sensor.version);
-  Serial.print("Unique ID:    ");
-  Serial.println(sensor.sensor_id);
-  Serial.print("Max Value:    ");
-  Serial.print(sensor.max_value);
-  Serial.println(" m/s^2");
-  Serial.print("Min Value:    ");
-  Serial.print(sensor.min_value);
-  Serial.println(" m/s^2");
-  Serial.print("Resolution:   ");
-  Serial.print(sensor.resolution);
-  Serial.println(" m/s^2");
-  Serial.println("------------------------------------");
-  Serial.println("");
-  delay(500);
-}
+int cnt = 0;
+float gdata[3];
+int lasttime;
 
-void displayDataRate(void)
-{
-  Serial.print("Data Rate:    ");
-
-  switch (accel.getDataRate())
-  {
-  case ADXL345_DATARATE_3200_HZ:
-    Serial.print("3200 ");
-    break;
-  case ADXL345_DATARATE_1600_HZ:
-    Serial.print("1600 ");
-    break;
-  case ADXL345_DATARATE_800_HZ:
-    Serial.print("800 ");
-    break;
-  case ADXL345_DATARATE_400_HZ:
-    Serial.print("400 ");
-    break;
-  case ADXL345_DATARATE_200_HZ:
-    Serial.print("200 ");
-    break;
-  case ADXL345_DATARATE_100_HZ:
-    Serial.print("100 ");
-    break;
-  case ADXL345_DATARATE_50_HZ:
-    Serial.print("50 ");
-    break;
-  case ADXL345_DATARATE_25_HZ:
-    Serial.print("25 ");
-    break;
-  case ADXL345_DATARATE_12_5_HZ:
-    Serial.print("12.5 ");
-    break;
-  case ADXL345_DATARATE_6_25HZ:
-    Serial.print("6.25 ");
-    break;
-  case ADXL345_DATARATE_3_13_HZ:
-    Serial.print("3.13 ");
-    break;
-  case ADXL345_DATARATE_1_56_HZ:
-    Serial.print("1.56 ");
-    break;
-  case ADXL345_DATARATE_0_78_HZ:
-    Serial.print("0.78 ");
-    break;
-  case ADXL345_DATARATE_0_39_HZ:
-    Serial.print("0.39 ");
-    break;
-  case ADXL345_DATARATE_0_20_HZ:
-    Serial.print("0.20 ");
-    break;
-  case ADXL345_DATARATE_0_10_HZ:
-    Serial.print("0.10 ");
-    break;
-  default:
-    Serial.print("???? ");
-    break;
-  }
-  Serial.println(" Hz");
-}
-
-void displayRange(void)
-{
-  Serial.print("Range:         +/- ");
-
-  switch (accel.getRange())
-  {
-  case ADXL345_RANGE_16_G:
-    Serial.print("16 ");
-    break;
-  case ADXL345_RANGE_8_G:
-    Serial.print("8 ");
-    break;
-  case ADXL345_RANGE_4_G:
-    Serial.print("4 ");
-    break;
-  case ADXL345_RANGE_2_G:
-    Serial.print("2 ");
-    break;
-  default:
-    Serial.print("?? ");
-    break;
-  }
-  Serial.println(" g");
-}
-
-void setup(void)
-{
-  // #ifndef ESP8266
-  //   while (!Serial)
-  //     ; // for Leonardo/Micro/Zero
-  // #endif
+void setup() {
+  Wire.begin();
   Serial.begin(115200);
-  Serial.println("Accelerometer Test");
-  Serial.println("");
-
-  /* Initialise the sensor */
-  if (!accel.begin())
-  {
-    /* There was a problem detecting the ADXL345 ... check your connections */
-    Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
-    while (1)
-      ;
+  Serial.println("ADXL345_Sketch - Basic Data");
+  Serial.println();
+  if (!myAcc.init()) {
+    Serial.println("ADXL345 not connected!");
   }
 
-  /* Set the range to whatever is appropriate for your project */
-  accel.setRange(ADXL345_RANGE_16_G);
-  // accel.setRange(ADXL345_RANGE_8_G);
-  // accel.setRange(ADXL345_RANGE_4_G);
-  // accel.setRange(ADXL345_RANGE_2_G);
+  /* Choose the data rate         Hz
+      ADXL345_DATA_RATE_3200    3200
+      ADXL345_DATA_RATE_1600    1600
+      ADXL345_DATA_RATE_800      800
+      ADXL345_DATA_RATE_400      400
+      ADXL345_DATA_RATE_200      200
+      ADXL345_DATA_RATE_100      100
+      ADXL345_DATA_RATE_50        50
+      ADXL345_DATA_RATE_25        25
+      ADXL345_DATA_RATE_12_5      12.5
+      ADXL345_DATA_RATE_6_25       6.25
+      ADXL345_DATA_RATE_3_13       3.13
+      ADXL345_DATA_RATE_1_56       1.56
+      ADXL345_DATA_RATE_0_78       0.78
+      ADXL345_DATA_RATE_0_39       0.39
+      ADXL345_DATA_RATE_0_20       0.20
+      ADXL345_DATA_RATE_0_10       0.10
+  */
+  myAcc.setDataRate(ADXL345_DATA_RATE_1600);
+  Serial.print("Data rate: ");
+  Serial.print(myAcc.getDataRateAsString());
 
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
+  /* In full resolution the size of the raw values depend on the range:
+      2g = 10 bit; 4g = 11 bit; 8g = 12 bit; 16g =13 bit;
+      uncomment to change to 10 bit for all ranges.
+   */
+  // myAcc.setFullRes(false);
 
-  /* Display additional settings (outside the scope of sensor_t) */
-  displayDataRate();
-  displayRange();
-  Serial.println("");
+  /* Choose the measurement range
+      ADXL345_RANGE_16G    16g
+      ADXL345_RANGE_8G      8g
+      ADXL345_RANGE_4G      4g
+      ADXL345_RANGE_2G      2g
+  */
+  myAcc.setRange(ADXL345_RANGE_8G);
+  Serial.print("  /  g-Range: ");
+  Serial.println(myAcc.getRangeAsString());
+  Serial.println();
+
+  /* Uncomment to enable Low Power Mode. It saves power but slightly
+      increases noise. LowPower only affetcs Data Rates 12.5 Hz to 400 Hz.
+  */
+  // myAcc.setLowPower(true);
 }
 
-void loop(void)
-{
-  /* Get a new sensor event */
-  sensors_event_t event;
-  accel.getEvent(&event);
+/* The LSB of the Data registers is 3.9 mg (milli-g, not milligramm).
+    This value is used calculating g from raw. However, this is an ideal
+    value which you might want to calibrate.
+*/
 
-  /* Display the results (acceleration is measured in m/s^2) */
-  // Serial.print("X: ");
-  // Serial.print(event.acceleration.x);
-  // Serial.print("  ");
-  // Serial.print("Y: ");
-  // Serial.print(event.acceleration.y);
-  // Serial.print("  ");
-  // Serial.print("Z: ");
-  // Serial.print(event.acceleration.z);
-  // Serial.print("  ");
-  // Serial.println("m/s^2 ");
-  xout = event.acceleration.x;
-  yout = event.acceleration.y;
-  zout = event.acceleration.z;
-  Serial.println(xout);
-  Serial.println(sizeof(xout));
+void loop() {
+  // xyzFloat g = myAcc.getGValues();
+  xyzFloat raw = myAcc.getRawValues();
 
-  // roll = atan(xout / sqrt(pow(xout, 2) + pow(zout, 2))) * 180 / PI;
-  // pitch = atan(-1 * xout / sqrt(pow(yout, 2) + pow(zout, 2))) * 180 / PI;
+  // Serial.print(g.x);
+  // Serial.print(',');
+  // Serial.print(g.y);
+  // Serial.print(',');
+  // Serial.println(g.z);
 
-  // rollF = 0.94 * rollF + 0.06 * roll;
-  // pitchF = 0.94 * pitchF + 0.06 * pitch;
+  Serial.print(raw.x, HEX);
+  Serial.println();
 
-  // Serial.println(rollF);
-  // Serial.println(pitchF);
-  delay(10);
+  // gdata[0] = g.x;
+  // gdata[1] = g.y;
+  // gdata[2] = g.z;
+
+  // if (++cnt == 100) {
+  //   cnt = 0;
+  //   Serial.println(millis() - lasttime);
+  //   lasttime = millis();
+  // }
+
+  delayMicroseconds(100000);
 }

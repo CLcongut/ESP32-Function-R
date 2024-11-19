@@ -2,7 +2,7 @@
 
 void i2cScan(void)
 {
-    Wire.setPins(17, 16);
+    // Wire.setPins(17, 16);
     Wire.begin();
     Serial.println("\nI2C Scanner");
     for (;;)

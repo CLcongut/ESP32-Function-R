@@ -62,7 +62,13 @@ void setup()
     {
         Serial.println("error");
     }
-    auto count = file.write("text so long and 中文eeeeee测试");
+    uint8_t buf[4];
+    int anum = 158645;
+    buf[0] = anum >> 24;
+    buf[1] = anum >> 16;
+    buf[2] = anum >> 8;
+    buf[3] = anum;
+    auto count = file.write();
     file.sync();
     file.close();
     // root.close();
